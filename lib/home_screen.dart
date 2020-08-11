@@ -11,12 +11,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   var _headerTitleColor=Colors.grey[800];
 
+  DateTime _dateOfBirth;
+  DateTime _todayDate;
+
+  TextEditingController _dateOfBirthController = TextEditingController();
+  TextEditingController _todayDateController = TextEditingController();
+
 
   @override
   Widget build(BuildContext context) {
 
     Widget dateOfBirth        = buildDateOfBirthWidget();
-    Widget todayDate          = buildDateOfBirthWidget();
+    Widget todayDate          = buildTodayDateWidget();
     Widget clearCalculateRow  = buildClearCalculateRow();
 
     Widget yourAgeRow         = buildYourAgeRow();
@@ -49,9 +55,22 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _buildHeader("Date Of Birth"),
-        TextField(
-          enabled: false,
-          decoration: _getDateTextDecoration(),
+        InkWell(
+          onTap: () async {
+              setState(() {
+                _selectDate(context).then((value){
+                  _dateOfBirth =value;
+                  _dateOfBirthController.text = _getFormattedDate(_dateOfBirth);
+                });
+
+              });
+          },
+          child: TextField(
+            controller: _dateOfBirthController,
+            enabled: false,
+            decoration: _getDateTextDecoration(),
+
+          ),
         ),
       ],
     );
@@ -62,20 +81,33 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _buildHeader("Today"),
-        TextField(
-          decoration: _getDateTextDecoration(),
+        InkWell(
+          onTap: (){
+            setState(() {
+              _selectDate(context).then((value){
+                _todayDate =value;
+                _todayDateController.text = _getFormattedDate(_todayDate);
+              });
+
+            });
+          },
+          child: TextField(
+            enabled: false,
+            controller: _todayDateController,
+            decoration: _getDateTextDecoration(),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildStylesActionButton(String buttonName) {
+  Widget _buildStylesActionButton(String buttonName, Function onPressedCallback) {
     return Container(
       width: 150,
       height: 50,
       child: RaisedButton(
         color: Theme.of(context).primaryColor,
-        onPressed: () {},
+        onPressed: onPressedCallback,
         child: Text(buttonName.toUpperCase(),
             style: TextStyle(fontSize: 20, color: Colors.white)),
       ),
@@ -112,8 +144,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget buildClearCalculateRow() {
-    Widget clearButton = _buildStylesActionButton("Clear");
-    Widget calcButton = _buildStylesActionButton("Calculate");
+    Widget clearButton = _buildStylesActionButton("Clear", (){
+      setState(() {
+        _dateOfBirth = DateTime.now();
+        _dateOfBirthController.text = _getFormattedDate(_dateOfBirth);
+
+        _todayDate = DateTime.now();
+        _todayDateController.text = _getFormattedDate(_dateOfBirth);
+
+      });
+    });
+    Widget calcButton = _buildStylesActionButton("Calculate", (){
+      //TODO -- calculate age and set it to a variable then setState
+
+    });
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -205,5 +249,20 @@ class _HomeScreenState extends State<HomeScreen> {
       child:
           Text(headerText, style: TextStyle(color: _headerTitleColor, fontSize: 20)),
     );
+  }
+
+  Future<DateTime> _selectDate(BuildContext context) async {
+    DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2015, 8),
+        lastDate: DateTime(2101));
+
+    return picked;
+  }
+
+  String _getFormattedDate(DateTime todayDate) {
+    return "${todayDate.year.toString()}-${todayDate.month.toString().padLeft(2,'0')}-${todayDate.day.toString().padLeft(2,'0')}";
+
   }
 }
